@@ -1,0 +1,29 @@
+{
+  "entities": {
+    "Lagerorte": {
+      "placeholders_set": 5,
+      "defaults_keys": [],
+      "computed_keys": [],
+      "reason": "Reine Stammdaten eines Lagerorts ohne numerische Felder, daher keine Formeln."
+    },
+    "Artikel": {
+      "placeholders_set": 13,
+      "defaults_keys": [
+        "zustand",
+        "anschaffungsdatum",
+        "bestand"
+      ],
+      "computed_keys": [],
+      "reason": "Keine Formel, da Bestand und Preis keine sinnvolle Berechnung ergeben und kein Datumspaar oder Preis per applookup vorhanden ist."
+    },
+    "Bestandsbewegungen": {
+      "placeholders_set": 7,
+      "defaults_keys": [
+        "zeitpunkt",
+        "menge"
+      ],
+      "computed_keys": [],
+      "reason": "Keine Formel, da die Menge direkt eingegeben wird und der Effekt auf den Bestand von der Bewegungsart abhängt, was eine Fallunterscheidung erfordern würde."
+    }
+  }
+}

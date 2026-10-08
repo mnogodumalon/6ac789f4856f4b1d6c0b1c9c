@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "language": "de",
+  "understanding": {
+    "summary": "Die Anwendung verwaltet das Inventar der Werkstatt: Artikel wie Maschinen, Werkzeuge und Verbrauchsmaterial mit Lagerort, aktuellem Bestand, Mindestbestand und Prüfterminen. Jede Entnahme, Rückgabe, jeder Zugang oder Verbrauch wird als Bestandsbewegung festgehalten.",
+    "roles": [
+      "Werkstattleitung",
+      "Mitarbeiter in der Werkstatt"
+    ],
+    "main_tasks": [
+      "Artikel und Lagerorte pflegen",
+      "Entnahmen, Rückgaben und Zugänge erfassen",
+      "Bestand und Mindestbestand im Blick behalten",
+      "Prüftermine überwachen"
+    ],
+    "platform_roles": [
+      {
+        "persona": "Werkstattleitung",
+        "role": "administrator",
+        "apps": [
+          "lagerorte",
+          "artikel",
+          "bestandsbewegungen"
+        ]
+      },
+      {
+        "persona": "Mitarbeiter in der Werkstatt",
+        "role": "standard",
+        "apps": [
+          "artikel",
+          "bestandsbewegungen",
+          "lagerorte"
+        ]
+      }
+    ]
+  },
+  "flows": [
+    {
+      "slug": "bestandsbewegung-erfassen",
+      "label": {
+        "de": "Bestandsbewegung erfassen",
+        "en": "Record stock movement"
+      },
+      "description": "Eine Entnahme, Rückgabe, einen Zugang, Verbrauch oder eine Aussonderung für einen Artikel erfassen. Der Artikel wird aus der Liste gewählt, der Bestand wird durch ein Werkzeug angepasst.",
+      "priority": "must",
+      "writes": [
+        {
+          "entity": "bestandsbewegungen",
+          "op": "create",
+          "when": "always",
+          "fields": {
+            "artikel": "picked",
+            "bewegungsart": "user",
+            "zeitpunkt": "derived:now",
+            "menge": "user",
+            "person_vorname": "user",
+            "person_nachname": "user",
+            "verwendungszweck": "user",
+            "bemerkungen": "user"
+          },
+          "needs": {}
+        }
+      ],
+      "required": [],
+      "brief": "# Flow `bestandsbewegung-erfassen` — Bestandsbewegung erfassen\nEine Entnahme, Rückgabe, einen Zugang, Verbrauch oder eine Aussonderung für einen Artikel erfassen. Der Artikel wird aus der Liste gewählt, der Bestand wird durch ein Werkzeug angepasst.\n\n## Your hook — import it, never rebuild what it owns\n`import { useBestandsbewegungErfassenFlow } from '@/lib/journey/flows/BestandsbewegungErfassen';` — generated from the Schreibliste below. It OWNS the form(s), one record search per picked field (columns and filter from the plan) and the submit plan with every fixed and derived value. You compose: `flow.forms.<entity>` for <Bound>/<Field>, `{...flow.picks.<field>.select} {...flow.pick('<field>')}` (or `flow.pickMany` for a multi pick) for <EntitySelectStep>, `flow.validateStep(n)` in StepNav.onNext, `flow.submit` + `flow.formList` for SummaryStep/SuccessStep, `flow.reset()`; what the hook does not own reads through its door `flow.port` — availability `useOccupancy(flow.port, '<entity>', { resource })`, a count `useRecordCount(flow.port, …)` — never import servicePort next to the hook. Options: `steps` (field → step), `items` (how a hit reads, per pick: artikel), `initial`, `messages`. The hook's docblock in .lane-context.md shows the exact call. Never import servicePort, useStepForm, useJourneySubmit, useRecordSearch or useDashboardData in this page — check-intents refuses a page that uses the hook and any of them.\n\n## Steps (in this order)\n1. Artikel auswählen und aktuellen Bestand sehen\n2. Art der Bewegung wählen\n3. Menge, Person und Verwendungszweck eingeben\n4. Prüfen und speichern\n\n## Schreibliste — the ONLY writes this flow makes (the gate compares your plan steps with this list)\n- creates `bestandsbewegungen`:\n    - `artikel`: from the record the user picks in this flow\n    - `bewegungsart`: the user enters it (bind it through the layer: form.field/…)\n    - `zeitpunkt`: derived: now() — set it in the plan step, never ask\n    - `menge`: the user enters it (bind it through the layer: form.field/…)\n    - `person_vorname`: the user enters it (bind it through the layer: form.field/…)\n    - `person_nachname`: the user enters it (bind it through the layer: form.field/…)\n    - `verwendungszweck`: the user enters it (bind it through the layer: form.field/…)\n    - `bemerkungen`: the user enters it (bind it through the layer: form.field/…)\n\n## Reads\n- `artikel` columns bezeichnung, artikelnummer, kategorie, lagerort, bestand, einheit\n\n## Checks BEFORE the write (block the submit with the message when they fail)\n- stock_sufficient (stock=`artikel.bestand`, quantity=`bestandsbewegungen.menge`) — message: „Der Bestand reicht für diese Menge nicht aus.“\n\n## Success page\n- shows: `bestandsbewegungen.artikel`, `bestandsbewegungen.bewegungsart`, `bestandsbewegungen.menge`\n- next flows to offer: `bestandsbewegung-erfassen`, `artikel-anlegen`\n\n## Never write these — another flow or a tool owns them\n- `artikel.bezeichnung` (owner: intent `artikel-anlegen`)\n- `artikel.artikelnummer` (owner: intent `artikel-anlegen`)\n- `artikel.kategorie` (owner: intent `artikel-anlegen`)\n- `artikel.hersteller` (owner: intent `artikel-anlegen`)\n- `artikel.modell` (owner: intent `artikel-anlegen`)\n- `artikel.seriennummer` (owner: intent `artikel-anlegen`)\n- `artikel.zustand` (owner: intent `artikel-anlegen`)\n- `artikel.lagerort` (owner: intent `artikel-anlegen`)\n- `artikel.mindestbestand` (owner: intent `artikel-anlegen`)\n- `artikel.einheit` (owner: intent `artikel-anlegen`)\n- `artikel.anschaffungsdatum` (owner: intent `artikel-anlegen`)\n- `artikel.anschaffungspreis` (owner: intent `artikel-anlegen`)\n- `artikel.naechster_pruefermin_placeholder_removed` (owner: intent `artikel-anlegen`)\n- `artikel.naechster_pruefdatum` (owner: intent `artikel-anlegen`)\n- `artikel.bemerkungen` (owner: intent `artikel-anlegen`)\n- `artikel.bestand` (owner: tool `bestand-anpassen`)\n"
+    },
+    {
+      "slug": "artikel-anlegen",
+      "label": {
+        "de": "Artikel anlegen",
+        "en": "Add article"
+      },
+      "description": "Einen neuen Artikel mit Lagerort und Anfangsbestand anlegen und den Zugang als Bestandsbewegung festhalten.",
+      "priority": "must",
+      "writes": [
+        {
+          "entity": "artikel",
+          "op": "create",
+          "when": "always",
+          "fields": {
+            "bezeichnung": "user",
+            "artikelnummer": "user",
+            "kategorie": "user",
+            "hersteller": "user",
+            "modell": "user",
+            "seriennummer": "user",
+            "zustand": "user",
+            "lagerort": "picked",
+            "mindestbestand": "user",
+            "einheit": "user",
+            "anschaffungsdatum": "user",
+            "anschaffungspreis": "user",
+            "naechster_pruefermin_placeholder_removed": "user",
+            "naechster_pruefdatum": "user",
+            "bemerkungen": "user"
+          },
+          "needs": {}
+        }
+      ],
+      "required": [],
+      "brief": "# Flow `artikel-anlegen` — Artikel anlegen\nEinen neuen Artikel mit Lagerort und Anfangsbestand anlegen und den Zugang als Bestandsbewegung festhalten.\n\n## Your hook — import it, never rebuild what it owns\n`import { useArtikelAnlegenFlow } from '@/lib/journey/flows/ArtikelAnlegen';` — generated from the Schreibliste below. It OWNS the form(s), one record search per picked field (columns and filter from the plan) and the submit plan with every fixed and derived value. You compose: `flow.forms.<entity>` for <Bound>/<Field>, `{...flow.picks.<field>.select} {...flow.pick('<field>')}` (or `flow.pickMany` for a multi pick) for <EntitySelectStep>, `flow.validateStep(n)` in StepNav.onNext, `flow.submit` + `flow.formList` for SummaryStep/SuccessStep, `flow.reset()`; what the hook does not own reads through its door `flow.port` — availability `useOccupancy(flow.port, '<entity>', { resource })`, a count `useRecordCount(flow.port, …)` — never import servicePort next to the hook. Options: `steps` (field → step), `items` (how a hit reads, per pick: lagerort), `initial`, `messages`. The hook's docblock in .lane-context.md shows the exact call. Never import servicePort, useStepForm, useJourneySubmit, useRecordSearch or useDashboardData in this page — check-intents refuses a page that uses the hook and any of them.\n\n## Steps (in this order)\n1. Stammdaten des Artikels eingeben\n2. Lagerort auswählen\n3. Anfangsbestand, Mindestbestand und Einheit angeben\n4. Speichern\n\n## Schreibliste — the ONLY writes this flow makes (the gate compares your plan steps with this list)\n- creates `artikel`:\n    - `bezeichnung`: the user enters it (bind it through the layer: form.field/…)\n    - `artikelnummer`: the user enters it (bind it through the layer: form.field/…)\n    - `kategorie`: the user enters it (bind it through the layer: form.field/…)\n    - `hersteller`: the user enters it (bind it through the layer: form.field/…)\n    - `modell`: the user enters it (bind it through the layer: form.field/…)\n    - `seriennummer`: the user enters it (bind it through the layer: form.field/…)\n    - `zustand`: the user enters it (bind it through the layer: form.field/…)\n    - `lagerort`: from the record the user picks in this flow\n    - `mindestbestand`: the user enters it (bind it through the layer: form.field/…)\n    - `einheit`: the user enters it (bind it through the layer: form.field/…)\n    - `anschaffungsdatum`: the user enters it (bind it through the layer: form.field/…)\n    - `anschaffungspreis`: the user enters it (bind it through the layer: form.field/…)\n    - `naechster_pruefermin_placeholder_removed`: the user enters it (bind it through the layer: form.field/…)\n    - `naechster_pruefdatum`: the user enters it (bind it through the layer: form.field/…)\n    - `bemerkungen`: the user enters it (bind it through the layer: form.field/…)\n\n## Reads\n- `lagerorte` columns bezeichnung, bereich, regal, fach\n\n## Success page\n- shows: `artikel.bezeichnung`, `artikel.lagerort`\n- next flows to offer: `bestandsbewegung-erfassen`\n\n## Never write these — another flow or a tool owns them\n- `bestandsbewegungen.artikel` (owner: intent `bestandsbewegung-erfassen`)\n- `bestandsbewegungen.bewegungsart` (owner: intent `bestandsbewegung-erfassen`)\n- `bestandsbewegungen.zeitpunkt` (owner: intent `bestandsbewegung-erfassen`)\n- `bestandsbewegungen.menge` (owner: intent `bestandsbewegung-erfassen`)\n- `bestandsbewegungen.person_vorname` (owner: intent `bestandsbewegung-erfassen`)\n- `bestandsbewegungen.person_nachname` (owner: intent `bestandsbewegung-erfassen`)\n- `bestandsbewegungen.verwendungszweck` (owner: intent `bestandsbewegung-erfassen`)\n- `bestandsbewegungen.bemerkungen` (owner: intent `bestandsbewegung-erfassen`)\n- `artikel.bestand` (owner: tool `bestand-anpassen`)\n"
+    }
+  ],
+  "public_pages": [],
+  "tools": [
+    {
+      "id": "bestand-anpassen",
+      "purpose": "Bei jeder neuen Bestandsbewegung den aktuellen Bestand des Artikels anpassen: Zugang und Rückgabe erhöhen, Entnahme, Verbrauch und Aussonderung verringern jeweils um die Menge."
+    },
+    {
+      "id": "pruefdatum-erinnerung",
+      "purpose": "Täglich Artikel mit Prüfpflicht sammeln, deren nächster Prüftermin innerhalb der nächsten 14 Tage liegt oder überfällig ist, und eine Sammelmail an den Schlüsselinhaber senden."
+    },
+    {
+      "id": "mindestbestand-meldung",
+      "purpose": "Täglich Artikel sammeln, deren aktueller Bestand unter dem Mindestbestand liegt, und eine Sammelmail an den Schlüsselinhaber senden."
+    }
+  ],
+  "covered_by_platform": [
+    {
+      "wish": "Artikel und Lagerorte erfassen, ändern und durchsuchen",
+      "feature": "record_form"
+    },
+    {
+      "wish": "Übersicht aller Artikel und Bewegungen mit Suche und Filter",
+      "feature": "list_page"
+    },
+    {
+      "wish": "Inventarliste als Tabelle oder Excel",
+      "feature": "csv_json_export"
+    },
+    {
+      "wish": "Artikel je Kategorie, Zustand oder Lagerort zählen",
+      "feature": "distribution_view"
+    },
+    {
+      "wish": "Nachvollziehen, wer etwas geändert hat",
+      "feature": "record_history"
+    }
+  ],
+  "ownership": {
+    "bestandsbewegungen": {
+      "artikel": "intent:bestandsbewegung-erfassen",
+      "bewegungsart": "intent:bestandsbewegung-erfassen",
+      "zeitpunkt": "intent:bestandsbewegung-erfassen",
+      "menge": "intent:bestandsbewegung-erfassen",
+      "person_vorname": "intent:bestandsbewegung-erfassen",
+      "person_nachname": "intent:bestandsbewegung-erfassen",
+      "verwendungszweck": "intent:bestandsbewegung-erfassen",
+      "bemerkungen": "intent:bestandsbewegung-erfassen"
+    },
+    "artikel": {
+      "bezeichnung": "intent:artikel-anlegen",
+      "artikelnummer": "intent:artikel-anlegen",
+      "kategorie": "intent:artikel-anlegen",
+      "hersteller": "intent:artikel-anlegen",
+      "modell": "intent:artikel-anlegen",
+      "seriennummer": "intent:artikel-anlegen",
+      "zustand": "intent:artikel-anlegen",
+      "lagerort": "intent:artikel-anlegen",
+      "mindestbestand": "intent:artikel-anlegen",
+      "einheit": "intent:artikel-anlegen",
+      "anschaffungsdatum": "intent:artikel-anlegen",
+      "anschaffungspreis": "intent:artikel-anlegen",
+      "naechster_pruefermin_placeholder_removed": "intent:artikel-anlegen",
+      "naechster_pruefdatum": "intent:artikel-anlegen",
+      "bemerkungen": "intent:artikel-anlegen",
+      "bestand": "tool:bestand-anpassen"
+    }
+  },
+  "dashboard": {
+    "focus": [
+      "Artikel unter Mindestbestand",
+      "Anstehende Prüftermine",
+      "Letzte Bestandsbewegungen",
+      "Artikel nach Kategorie und Zustand"
+    ],
+    "hints": [
+      "Bestand und Mindestbestand nebeneinander zeigen",
+      "Defekte und reparaturbedürftige Artikel hervorheben",
+      "Überfällige Prüftermine sichtbar machen"
+    ],
+    "wishes": []
+  }
+}
